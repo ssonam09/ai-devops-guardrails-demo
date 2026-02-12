@@ -1,7 +1,7 @@
-name: Guardrails Demo
+
+name: Guardrails Demo (GitHub + Azure ML)
 
 on:
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -10,16 +10,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Simulate Azure ML drift signal
-        run: |
-          mkdir evidence
-          echo '{ "azure_ml_drift": true }' > evidence/azureml.json
+      - name: Detect local drift
+        run: python scripts/drift_check.py > evidence/local_drift.json
+
+      - name: Read Azure ML monitoring signal
+        run: python scripts/fetch_azureml_monitor.py > evidence/azureml.json
 
       - name: Risk scoring
-        run: |
-          echo '{ "risk": "HIGH", "decision": "needs-approval" }' > evidence/decision.json
+        run: python scripts/risk_score.py evidence/local_drift.json evidence/azureml.json > evidence/decision.json
 
-      - name: Upload evidence
+      - name: Upload evidence bundle
         uses: actions/upload-artifact@v4
         with:
           name: guardrail-evidence
@@ -30,4 +30,4 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - run: echo "Deploying to production"
+      - run: echo "Deploying to production after approval"
