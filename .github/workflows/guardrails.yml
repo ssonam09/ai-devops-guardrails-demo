@@ -4,11 +4,16 @@ name: Guardrails Demo (GitHub + Azure ML)
 on:
   workflow_dispatch:
 
+
 jobs:
   guardrails:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # ✅ ADD THIS STEP
+      - name: Create evidence directory
+        run: mkdir -p evidence
 
       - name: Detect local drift
         run: python scripts/drift_check.py > evidence/local_drift.json
@@ -24,7 +29,6 @@ jobs:
         with:
           name: guardrail-evidence
           path: evidence/
-
   deploy:
     needs: guardrails
     runs-on: ubuntu-latest
