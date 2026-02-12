@@ -1,0 +1,33 @@
+name: Guardrails Demo
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Simulate Azure ML drift signal
+        run: |
+          mkdir evidence
+          echo '{ "azure_ml_drift": true }' > evidence/azureml.json
+
+      - name: Risk scoring
+        run: |
+          echo '{ "risk": "HIGH", "decision": "needs-approval" }' > evidence/decision.json
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: guardrail-evidence
+          path: evidence/
+
+  deploy:
+    needs: guardrails
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - run: echo "Deploying to production"
